@@ -21,6 +21,10 @@ github.com/andybalholm/brotli v1.0.5/go.mod h1:fO7iG3H7G2nSZ7m0zPUDn85XEX2GTukHG
 github.com/antihax/optional v1.0.0/go.mod h1:uupD/76wgC+ih3iEmQUL+0Ugr19nfwCT1kdvxnR2qWY=
 github.com/apache/arrow/go/arrow v0.0.0-20211112161151-bc219186db40 h1:q4dksr6ICHXqG5hm0ZW5IHyeEJXoIJSOZeBLmWPNeIQ=
 github.com/apache/arrow/go/arrow v0.0.0-20211112161151-bc219186db40/go.mod h1:Q7yQnSMnLvcXlZ8RV+jwz/6y1rQTqbX6C82SndT52Zs=
+github.com/aramperes/sqlds/v2 v2.5.1 h1:njaRZyabFaKalOPKBLYzead+3kZTet0oUeJg+gEQqBA=
+github.com/aramperes/sqlds/v2 v2.5.1/go.mod h1:Ob8v+p/MOW0EShjqW63P+qmL52LJ6DwnDJsdKoN8U6s=
+github.com/aramperes/sqlds/v2 v2.5.2 h1:8JzS6WrUlr9UC8k0k7QfnuCkUB0ZToonJDLYYgEwNwA=
+github.com/aramperes/sqlds/v2 v2.5.2/go.mod h1:Ob8v+p/MOW0EShjqW63P+qmL52LJ6DwnDJsdKoN8U6s=
 github.com/beorn7/perks v1.0.1 h1:VlbKKnNfV8bJzeqoa4cOKqO6bYr3WgKZxO8Z16+hsOM=
 github.com/beorn7/perks v1.0.1/go.mod h1:G2ZrVWU2WbWT9wwq4/hrbKbnv/1ERSJQ0ibhJ6rlkpw=
 github.com/boombuler/barcode v1.0.0/go.mod h1:paBWMcWSl3LHKBqUq+rly7CNSldXjb2rDl3JlRe0mD8=

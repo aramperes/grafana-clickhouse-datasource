@@ -25,7 +25,9 @@ import (
 )
 
 // Clickhouse defines how to connect to a Clickhouse datasource
-type Clickhouse struct{}
+type Clickhouse struct {
+	customSettings []CustomSetting
+}
 
 // getTLSConfig returns tlsConfig from settings
 // logic reused from https://github.com/grafana/grafana/blob/615c153b3a2e4d80cff263e67424af6edb992211/pkg/models/datasource_cache.go#L211
@@ -103,6 +105,7 @@ func (h *Clickhouse) Connect(config backend.DataSourceInstanceSettings, message 
 	if err != nil {
 		return nil, err
 	}
+	h.customSettings = settings.CustomSettings
 	var tlsConfig *tls.Config
 	if settings.TlsAuthWithCACert || settings.TlsClientAuth {
 		tlsConfig, err = getTLSConfig(settings)
@@ -130,12 +133,6 @@ func (h *Clickhouse) Connect(config backend.DataSourceInstanceSettings, message 
 	if protocol == clickhouse.HTTP {
 		compression = clickhouse.CompressionGZIP
 	}
-	customSettings := make(clickhouse.Settings)
-	if settings.CustomSettings != nil {
-		for _, setting := range settings.CustomSettings {
-			customSettings[setting.Setting] = setting.Value
-		}
-	}
 
 	db := clickhouse.OpenDB(&clickhouse.Options{
 		ClientInfo: clickhouse.ClientInfo{
@@ -154,7 +151,6 @@ func (h *Clickhouse) Connect(config backend.DataSourceInstanceSettings, message 
 		DialTimeout: time.Duration(t) * time.Second,
 		ReadTimeout: time.Duration(qt) * time.Second,
 		Protocol:    protocol,
-		Settings:    customSettings,
 	})
 
 	timeout := time.Duration(t)
@@ -220,7 +216,7 @@ func (h *Clickhouse) Settings(config backend.DataSourceInstanceSettings) sqlds.D
 	}
 }
 
-func (h *Clickhouse) MutateQuery(ctx context.Context, req backend.DataQuery) (context.Context, backend.DataQuery) {
+func (h *Clickhouse) MutateQuery(ctx context.Context, req backend.DataQuery, pluginContext backend.PluginContext) (context.Context, backend.DataQuery) {
 	var dataQuery struct {
 		Meta struct {
 			TimeZone string `json:"timezone"`
@@ -232,12 +228,32 @@ func (h *Clickhouse) MutateQuery(ctx context.Context, req backend.DataQuery) (co
 		return ctx, req
 	}
 
-	if dataQuery.Meta.TimeZone == "" {
-		return ctx, req
+	options := []clickhouse.QueryOption{}
+
+	if h.customSettings != nil && len(h.customSettings) > 0 {
+		if query, err := sqlds.GetQuery(req, &pluginContext); err == nil {
+			customSettings := make(clickhouse.Settings)
+			for _, setting := range h.customSettings {
+				// Apply macro interpolation on settings
+				rawValue := setting.Value
+				query = query.WithSQL(rawValue)
+
+				if value, err := sqlds.Interpolate(h, query); err == nil {
+					customSettings[setting.Setting] = value
+				} else {
+					customSettings[setting.Setting] = setting.Value
+				}
+			}
+			options = append(options, clickhouse.WithSettings(customSettings))
+		}
 	}
 
-	loc, _ := time.LoadLocation(dataQuery.Meta.TimeZone)
-	return clickhouse.Context(ctx, clickhouse.WithUserLocation(loc)), req
+	if dataQuery.Meta.TimeZone != "" {
+		loc, _ := time.LoadLocation(dataQuery.Meta.TimeZone)
+		options = append(options, clickhouse.WithUserLocation(loc))
+	}
+
+	return clickhouse.Context(ctx, options...), req
 }
 
 // MutateResponse For any view other than traces we convert FieldTypeNullableJSON to string
